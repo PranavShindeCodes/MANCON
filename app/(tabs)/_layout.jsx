@@ -7,13 +7,28 @@ const _layout = () => {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: "white",
-        tabBarInactiveTintColor: "gray",
+        tabBarActiveTintColor: "#fff",
+        tabBarInactiveTintColor: "#aaa",
+
+        // Only place where inline style is required
         tabBarStyle: {
-          backgroundColor: "blueviolet",
+          position: "absolute",
+          bottom: 10,
+          left: 10,
+          right: 10,
+
+          backgroundColor: "rgba(30,30,30,0.45)", // transparent glass
+          borderRadius: 20,
+          height: 65,
+          borderTopWidth: 0,
+          elevation: 20,
+          shadowColor: "#000",
+          shadowOpacity: 0.25,
+          shadowRadius: 8,
         },
       }}
     >
+      {/* HOME TAB */}
       <Tabs.Screen
         name="index"
         options={{
@@ -23,21 +38,30 @@ const _layout = () => {
           ),
         }}
       />
+
+      {/* FLOATING CREATE BUTTON */}
       <Tabs.Screen
         name="create"
         options={{
-          title: "Create",
-          tabBarIcon: ({ color, size }) => (
-            // <FontAwesome name="plus" size={size} color={color} />
+          title: "",
+          tabBarIcon: () => (
             <View
-              style={{ backgroundColor: "blueviolet" }}
-              className="w-20 h-20 mb-10 flex content-center items-center border-0 rounded-full text-center pt-5"
+              className="w-16 h-16 bg-purple-600 rounded-full mb-10 
+                         justify-center items-center shadow-lg"
+              style={{
+                shadowColor: "#8b3eff",
+                shadowOpacity: 0.4,
+                shadowRadius: 10,
+                elevation: 12,
+              }}
             >
-              <FontAwesome name="plus" size={size} color={color} />
+              <FontAwesome name="plus" size={30} color="white" />
             </View>
           ),
         }}
       />
+
+      {/* PROFILE TAB */}
       <Tabs.Screen
         name="profile"
         options={{
