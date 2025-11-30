@@ -19,10 +19,17 @@ mongoose
   .catch((err) => {
     console.log(err);
   });
-app.post("/", async (req, res) => {
+app.get("/", (req, res) => {
+  res.json({ message: "data" });
+});
+app.post("/register", async (req, res) => {
   const { name, email } = req.body;
+  const exist = await User.findOne({ email });
+  if (exist) {
+    return res.json({ message: "user already exists", sucess: false });
+  }
   const user = await User.create({ name, email });
-  res.json({ message: "user added successfully", user });
+  res.json({ message: "user added successfully", user, success: true });
 });
 app.listen(process.env.PORT, () => {
   console.log(`server is running on port ${process.env.PORT}`);
