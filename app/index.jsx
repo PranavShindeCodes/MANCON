@@ -34,7 +34,7 @@ const index = () => {
         className="text-white mt-10 border-b-2 border-purple-600 ml-5 mr-5"
       ></TextInput>
       <TextInput
-        placeholder="Password"
+        placeholder="OTP"
         placeholderTextColor="#fff"
         className="text-white mt-10 border-b-2 border-purple-600 ml-5 mr-5"
       ></TextInput>
