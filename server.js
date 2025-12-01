@@ -14,7 +14,10 @@ app.use(cors());
 
 // DB connect
 mongoose
-  .connect(process.env.URI, { dbName: "mancon" })
+  .connect(
+    "mongodb+srv://pranavshinde7965_db_user:pranav7965@mancon.mvr5rh5.mongodb.net/",
+    { dbName: "mancon" }
+  )
   .then(() => console.log("Connected"))
   .catch((err) => console.log(err));
 
