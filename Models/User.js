@@ -8,7 +8,10 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  payment: {
+  otp: {
+    type: String,
+  },
+  isVerified: {
     type: Boolean,
     default: false,
   },
