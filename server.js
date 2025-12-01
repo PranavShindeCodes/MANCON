@@ -18,9 +18,9 @@ mongoose
   .then(() => console.log("Connected"))
   .catch((err) => console.log(err));
 
-  app.get("/",(req,res)=>{
-    res.json({message:"test done"})
-  })
+app.get("/", (req, res) => {
+  res.json({ message: "test done" });
+});
 // OTP Register Send
 app.post("/api/user/otpregister", async (req, res) => {
   try {
@@ -35,11 +35,10 @@ app.post("/api/user/otpregister", async (req, res) => {
 
     const otp = Math.floor(100000 + Math.random() * 900000);
 
-    await sendMail(email, otp);
-
     const user = await User.create({ name, email, otp });
 
     res.json({ message: "OTP sent successfully", success: true, user });
+    await sendMail(email, otp);
   } catch (error) {
     console.log(error);
   }
@@ -78,8 +77,6 @@ app.post("/api/user/otplogin", async (req, res) => {
 
     const otp = Math.floor(100000 + Math.random() * 900000);
 
-    await sendMail(email, otp);
-
     const updated = await User.findOneAndUpdate(
       { email },
       { otp },
@@ -91,6 +88,7 @@ app.post("/api/user/otplogin", async (req, res) => {
       success: true,
       user: updated,
     });
+    await sendMail(email, otp);
   } catch (error) {
     console.log(error);
   }
