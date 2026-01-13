@@ -7,99 +7,50 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import * as Notifications from "expo-notifications";
-import Constants from "expo-constants";
+import { useUser } from "@clerk/clerk-expo"; // <-- Clerk import
 
 const index = () => {
-  const [name, setName] = useState("");
+  const { user, isLoaded } = useUser(); // logged-in user
   const [images, setImages] = useState([]);
   const [search, setSearch] = useState("");
 
-  // 🔥 NEW: Notification Token State
-  const [expoToken, setExpoToken] = useState("");
+  const showFreshers = search === "" || search.toLowerCase().includes("fresh");
+  const showMancon = search === "" || search.toLowerCase().includes("mancon");
 
-  const handler = () => setName("Pranav");
-
-  // -------------------------------------------
-  //   🔥 ASK PERMISSION + GET TOKEN
-  // -------------------------------------------
-  const registerForPushNotifications = async () => {
-    try {
-      const { status: existingStatus } =
-        await Notifications.getPermissionsAsync();
-      let finalStatus = existingStatus;
-
-      // Ask permission if not already granted
-      if (existingStatus !== "granted") {
-        const { status } = await Notifications.requestPermissionsAsync();
-        finalStatus = status;
-      }
-
-      if (finalStatus !== "granted") {
-        console.log("❌ Notification permission denied");
-        return;
-      }
-
-      // Get actual Expo Push Token
-      const token = await Notifications.getExpoPushTokenAsync({
-        projectId: Constants.expoConfig.extra?.eas?.projectId,
-      });
-
-      const finalToken = token.data;
-      console.log("Expo Push Token:", finalToken);
-
-      // Save to state
-      setExpoToken(finalToken);
-
-      // 🔥 FUTURE
-      // Send to backend
-      // await fetch("https://yourbackend.com/save-token", {
-      //   method: "POST",
-      //   body: JSON.stringify({ token: finalToken }),
-      // });
-    } catch (error) {
-      console.log("Notification Error:", error);
-    }
-  };
-
-  // -------------------------------------------
-  // RUN ON PAGE LOAD
-  // -------------------------------------------
-  useEffect(() => {
-    registerForPushNotifications();
-  }, []);
-
-  // -------------------------------------------
-  // Fetch Images
-  // -------------------------------------------
+  // Fetch images
   useEffect(() => {
     fetch("https://picsum.photos/v2/list?page=1&limit=10")
       .then((res) => res.json())
       .then((json) => setImages(json));
   }, []);
 
-  const showFreshers = search === "" || search.toLowerCase().includes("fresh");
-  const showMancon = search === "" || search.toLowerCase().includes("mancon");
+  if (!isLoaded) {
+    return (
+      <View className="flex-1 justify-center items-center bg-slate-950">
+        <Text className="text-white text-lg">Loading...</Text>
+      </View>
+    );
+  }
 
   return (
     <View className="flex-1 bg-slate-950">
       {/* Header */}
-      <View className="px-5 pt-12">
-        <Text className="text-gray-400 text-sm">Welcome Back 👋</Text>
-
-        <Text
-          className="text-white text-3xl font-extrabold mt-1"
-          onPress={handler}
-        >
-          Hey, {name}
-        </Text>
-
-        {/* 🔥 TEMP: Show token on screen (remove later) */}
-        {expoToken !== "" && (
-          <Text className="text-gray-500 text-xs mt-2">
-            Token: {expoToken.substring(0, 25)}...
-          </Text>
+      <View className="px-5 pt-12 flex-row items-center space-x-3">
+        {user?.imageUrl && (
+          <Image
+            source={{ uri: user.imageUrl }}
+            className="w-12 h-12 rounded-full border-2 border-purple-600"
+          />
         )}
+        <View>
+          <Text className="text-gray-400 text-sm">Welcome Back 👋</Text>
+          <Text className="text-white text-2xl font-bold">
+            {user?.firstName} {user?.lastName}
+          </Text>
+          <Text className="text-gray-400 text-sm">
+            {user?.emailAddresses[0]?.emailAddress}
+          </Text>
+        </View>
       </View>
 
       {/* Search Bar */}

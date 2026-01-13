@@ -1,44 +1,25 @@
 import { View, Text, Image, TouchableOpacity, ScrollView } from "react-native";
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { useRouter } from "expo-router";
+import { useUser, useClerk } from "@clerk/clerk-expo"; // Clerk imports
 
 const Profile = () => {
-  // ---- STATES TO STORE API DATA ----
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const route = useRouter();
-  const handler = () => {
-    route.navigate("/signin");
-  };
+  const router = useRouter();
+  const { signOut } = useClerk(); // logout function
+  const { user, isLoaded } = useUser(); // logged-in user info
 
-  // ---- API CALL STRUCTURE ----
-  const fetchUser = async () => {
+  // ---- LOGOUT HANDLER ----
+  const logoutHandler = async () => {
     try {
-      // FUTURE: Replace this URL with your real API
-      // Example: const res = await fetch("https://yourapi.com/user/profile");
-
-      const res = await fetch("https://dummyjson.com/users/1"); // dummy api
-      const data = await res.json();
-
-      setUser({
-        name: data.firstName + " " + data.lastName,
-        email: data.email,
-        avatar: data.image,
-      });
-
-      setLoading(false);
+      await signOut(); // Clerk session clear
+      router.replace("/signin"); // go to login
     } catch (err) {
-      console.log("Error Loading Profile:", err);
-      setLoading(false);
+      console.log("Logout failed:", err);
     }
   };
 
-  // ---- RUN API ON SCREEN LOAD ----
-  useEffect(() => {
-    fetchUser();
-  }, []);
-
-  if (loading) {
+  // ---- WAIT TILL USER LOADED ----
+  if (!isLoaded) {
     return (
       <View className="flex-1 items-center justify-center bg-slate-900">
         <Text className="text-white text-lg">Loading...</Text>
@@ -51,13 +32,15 @@ const Profile = () => {
       {/* USER HEADER */}
       <View className="items-center mb-8 px-5">
         <Image
-          source={{ uri: user?.avatar }}
+          source={{ uri: user?.profileImageUrl }}
           className="w-28 h-28 rounded-full border-4 border-purple-600"
         />
         <Text className="text-white text-xl font-semibold mt-4">
-          {user?.name}
+          {user?.firstName} {user?.lastName}
         </Text>
-        <Text className="text-gray-400 mt-1 text-sm">{user?.email}</Text>
+        <Text className="text-gray-400 mt-1 text-sm">
+          {user?.emailAddresses[0]?.emailAddress}
+        </Text>
       </View>
 
       {/* SETTINGS BOX MODERN LOOK */}
@@ -78,7 +61,8 @@ const Profile = () => {
           <Text className="text-white text-lg">QR Scanner</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity className="py-5 px-4" onPress={handler}>
+        {/* LOGOUT BUTTON */}
+        <TouchableOpacity className="py-5 px-4" onPress={logoutHandler}>
           <Text className="text-red-400 text-lg">Logout</Text>
         </TouchableOpacity>
       </View>
