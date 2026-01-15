@@ -18,7 +18,6 @@ export default function Create() {
   const [image, setImage] = useState(null);
   const [loginId, setLoginId] = useState("");
 
-  // dropdown
   const [open, setOpen] = useState(false);
   const [selectedClass, setSelectedClass] = useState(null);
   const [items, setItems] = useState([
@@ -34,7 +33,6 @@ export default function Create() {
     { label: "MBA II", value: "MBA II" },
   ]);
 
-  // 🔥 Load QR login id
   useEffect(() => {
     const loadQR = async () => {
       const data = await AsyncStorage.getItem("scannedCodes");
@@ -66,27 +64,47 @@ export default function Create() {
   };
 
   const handleSubmit = async () => {
-    if (!name || !selectedClass || !image) {
+    if (!name || !selectedClass || !image || !loginId) {
       Alert.alert("Error", "Fill all fields!");
       return;
     }
 
     const formData = new FormData();
-    formData.append("loginId", loginId);
     formData.append("name", name);
-    formData.append("class", selectedClass);
-    formData.append("photo", {
+    formData.append("idCard", loginId);
+    formData.append("classYear", selectedClass);
+    formData.append("status", false);
+    formData.append("image", {
       uri: image,
       name: "student.jpg",
       type: "image/jpeg",
     });
 
-    console.log("FORM DATA:", formData);
+    try {
+      // Replace YOUR_PC_IP with your computer's IP if using real device
+      const res = await fetch("http://10.136.182.195:1000/api/user/login", {
+        method: "POST",
+        body: formData,
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
 
-    Alert.alert("Success", "Form ready for backend");
-    setName("");
-    setSelectedClass(null);
-    setImage(null);
+      const data = await res.json();
+      console.log("Backend response:", data);
+
+      if (data.success !== false) {
+        Alert.alert("Success", "Registration Done");
+        setName("");
+        setSelectedClass(null);
+        setImage(null);
+      } else {
+        Alert.alert("Error", data.message || "Something went wrong");
+      }
+    } catch (err) {
+      console.log(err);
+      Alert.alert("Server Error", "Check your backend server");
+    }
   };
 
   return (

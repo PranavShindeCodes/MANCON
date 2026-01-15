@@ -7,6 +7,9 @@ const Profile = () => {
   const logoutHandler = () => {
     router.replace("/");
   };
+  const ticketHandler = () => {
+    router.push("/ticket"); // not replace
+  };
 
   return (
     <ScrollView className="flex-1 bg-slate-900 pt-12">
@@ -30,7 +33,10 @@ const Profile = () => {
           <Text className="text-white text-lg">Contact Support</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity className="py-5 px-4 border-b border-white/10">
+        <TouchableOpacity
+          className="py-5 px-4 border-b border-white/10"
+          onPress={ticketHandler}
+        >
           <Text className="text-white text-lg">Your Tickets</Text>
         </TouchableOpacity>
 

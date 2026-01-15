@@ -1,7 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -16,6 +16,30 @@ export default function QRScanner() {
   const [facing, setFacing] = useState("back");
   const [permission, requestPermission] = useCameraPermissions();
   const [scanned, setScanned] = useState(false);
+  const [checkingLogin, setCheckingLogin] = useState(true);
+
+  // 🔥 Auto-login if token already exists
+  useEffect(() => {
+    const checkLogin = async () => {
+      const token = await AsyncStorage.getItem("loginQR");
+
+      if (token) {
+        router.replace("(tabs)");
+      } else {
+        setCheckingLogin(false);
+      }
+    };
+
+    checkLogin();
+  }, []);
+
+  if (checkingLogin) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <ActivityIndicator size="large" />
+      </View>
+    );
+  }
 
   if (!permission) return <View />;
 
@@ -32,28 +56,23 @@ export default function QRScanner() {
     );
   }
 
-  // 🔥 Scan & Save to Local Storage
+  // 🔥 Scan → save token → login
   const handleScan = async ({ data, type }) => {
     if (scanned) return;
 
     setScanned(true);
 
-    const scannedItem = {
-      id: Date.now().toString(),
-      value: data,
-      type,
-      time: new Date().toLocaleString(),
-    };
-
     try {
-      const existing = await AsyncStorage.getItem("scannedCodes");
-      const list = existing ? JSON.parse(existing) : [];
+      const loginData = {
+        value: data,
+        type,
+        time: new Date().toLocaleString(),
+      };
 
-      list.unshift(scannedItem); // newest on top
+      // 🔐 Always overwrite (one phone = one user)
+      await AsyncStorage.setItem("loginQR", JSON.stringify(loginData));
 
-      await AsyncStorage.setItem("scannedCodes", JSON.stringify(list));
-
-      Alert.alert("Scan Successful", data, [
+      Alert.alert("Login Successful", data, [
         {
           text: "OK",
           onPress: () => router.replace("(tabs)"),
@@ -61,7 +80,8 @@ export default function QRScanner() {
       ]);
     } catch (error) {
       console.log(error);
-      Alert.alert("Error", "Failed to save scan");
+      Alert.alert("Error", "Failed to save login");
+      setScanned(false);
     }
   };
 
@@ -92,7 +112,7 @@ export default function QRScanner() {
           <View style={styles.scanArea} />
           {!scanned && (
             <View style={styles.textContainer}>
-              <Text style={styles.scanText}>Scan a QR or Barcode</Text>
+              <Text style={styles.scanText}>Scan your QR to Login</Text>
               <ActivityIndicator color="#fff" style={{ marginTop: 10 }} />
             </View>
           )}
