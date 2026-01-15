@@ -1,126 +1,177 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as ImagePicker from "expo-image-picker";
+import { useEffect, useState } from "react";
 import {
-  View,
+  Alert,
+  Image,
+  KeyboardAvoidingView,
+  Platform,
   Text,
   TextInput,
   TouchableOpacity,
-  ScrollView,
-  Image,
-  Alert,
+  View,
 } from "react-native";
-import React, { useState } from "react";
-import * as ImagePicker from "expo-image-picker";
+import DropDownPicker from "react-native-dropdown-picker";
 
-const Create = () => {
+export default function Create() {
   const [name, setName] = useState("");
-  const [selectedClass, setSelectedClass] = useState("");
-  const [photo, setPhoto] = useState(null);
+  const [image, setImage] = useState(null);
+  const [loginId, setLoginId] = useState("");
 
-  const classOptions = [
-    { label: "BBA I → MBA II", value: "BBA I → MBA II" },
-    { label: "BCA I → MCA", value: "BCA I → MCA" },
-  ];
+  // dropdown
+  const [open, setOpen] = useState(false);
+  const [selectedClass, setSelectedClass] = useState(null);
+  const [items, setItems] = useState([
+    { label: "BCA I", value: "BCA I" },
+    { label: "BCA II", value: "BCA II" },
+    { label: "BCA III", value: "BCA III" },
+    { label: "MCA I", value: "MCA I" },
+    { label: "MCA II", value: "MCA II" },
+    { label: "BBA I", value: "BBA I" },
+    { label: "BBA II", value: "BBA II" },
+    { label: "BBA III", value: "BBA III" },
+    { label: "MBA I", value: "MBA I" },
+    { label: "MBA II", value: "MBA II" },
+  ]);
 
-  // Pick image
+  // 🔥 Load QR login id
+  useEffect(() => {
+    const loadQR = async () => {
+      const data = await AsyncStorage.getItem("scannedCodes");
+      if (data) {
+        const list = JSON.parse(data);
+        if (list.length > 0) {
+          setLoginId(list[0].value);
+        }
+      }
+    };
+    loadQR();
+  }, []);
+
   const pickImage = async () => {
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission.granted) return alert("Permission denied!");
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert("Permission required");
+      return;
+    }
 
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
       quality: 0.7,
     });
 
-    if (!result.canceled) setPhoto(result.assets[0]);
-  };
-
-  // Submit to backend
-  const handleSubmit = async () => {
-    if (!name || !selectedClass || !photo) return alert("Fill all fields!");
-
-    const formData = new FormData();
-    formData.append("name", name);
-    formData.append("class", selectedClass);
-
-    formData.append("photo", {
-      uri: photo.uri,
-      type: "image/jpeg",
-      name: "userphoto.jpg",
-    });
-
-    try {
-      const res = await fetch("http://YOUR_SERVER_IP:5000/upload", {
-        method: "POST",
-        body: formData,
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
-
-      const data = await res.json();
-      console.log(data);
-      Alert.alert("Success", "Data uploaded successfully!");
-      setName("");
-      setSelectedClass("");
-      setPhoto(null);
-    } catch (err) {
-      console.log("Upload error:", err);
-      Alert.alert("Error", "Upload failed!");
+    if (!result.canceled) {
+      setImage(result.assets[0].uri);
     }
   };
 
+  const handleSubmit = async () => {
+    if (!name || !selectedClass || !image) {
+      Alert.alert("Error", "Fill all fields!");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("loginId", loginId);
+    formData.append("name", name);
+    formData.append("class", selectedClass);
+    formData.append("photo", {
+      uri: image,
+      name: "student.jpg",
+      type: "image/jpeg",
+    });
+
+    console.log("FORM DATA:", formData);
+
+    Alert.alert("Success", "Form ready for backend");
+    setName("");
+    setSelectedClass(null);
+    setImage(null);
+  };
+
   return (
-    <ScrollView className="bg-slate-900 flex-1 px-5 pt-12">
-      <Text className="text-white text-3xl font-extrabold mb-6">
-        Book Your Ticket 🎟️
-      </Text>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      className="flex-1 bg-slate-900"
+    >
+      <View className="flex-1 px-5 pt-12">
+        <Text className="text-white text-3xl font-extrabold mb-6">
+          Book Your Ticket 🎟️
+        </Text>
 
-      <Text className="text-gray-300 mb-1 ml-1">Full Name</Text>
-      <TextInput
-        className="bg-slate-800 border border-purple-700 rounded-2xl px-4 py-3 text-white mb-4"
-        placeholder="Enter your full name"
-        placeholderTextColor="#787878"
-        value={name}
-        onChangeText={setName}
-      />
-
-      <Text className="text-gray-300 mb-1 ml-1">Class / Batch</Text>
-      <View className="bg-slate-800 border border-purple-700 rounded-2xl mb-4">
-        <Picker
-          selectedValue={selectedClass}
-          onValueChange={(itemValue) => setSelectedClass(itemValue)}
-          dropdownIconColor="#fff"
-          style={{ color: "white" }}
-        >
-          <Picker.Item label="Select Class" value="" />
-          {classOptions.map((opt) => (
-            <Picker.Item key={opt.value} label={opt.label} value={opt.value} />
-          ))}
-        </Picker>
-      </View>
-
-      <Text className="text-gray-300 mb-1 ml-1">Upload Photo</Text>
-      <TouchableOpacity
-        className="bg-purple-700 py-3 rounded-2xl mb-4 items-center justify-center"
-        onPress={pickImage}
-      >
-        <Text className="text-white font-semibold text-lg">Choose Photo</Text>
-      </TouchableOpacity>
-      {photo && (
-        <Image
-          source={{ uri: photo.uri }}
-          className="w-32 h-32 rounded-2xl mb-4 self-center"
-          resizeMode="cover"
+        {/* Name */}
+        <Text className="text-gray-300 mb-1 ml-1">Full Name</Text>
+        <TextInput
+          className="bg-slate-800 border border-purple-700 rounded-2xl px-4 py-3 text-white mb-4"
+          placeholder="Enter your full name"
+          placeholderTextColor="#787878"
+          value={name}
+          onChangeText={setName}
         />
-      )}
 
-      <TouchableOpacity
-        className="bg-purple-700 py-4 rounded-2xl shadow-lg shadow-purple-900/50 mb-20"
-        onPress={handleSubmit}
-      >
-        <Text className="text-center text-white text-xl font-bold">Submit</Text>
-      </TouchableOpacity>
-    </ScrollView>
+        {/* Dropdown */}
+        <Text className="text-gray-300 mb-2 ml-1">Class / Batch</Text>
+        <DropDownPicker
+          open={open}
+          value={selectedClass}
+          items={items}
+          setOpen={setOpen}
+          setValue={setSelectedClass}
+          setItems={setItems}
+          listMode="SCROLLVIEW"
+          placeholder="Select your class"
+          style={{
+            backgroundColor: "#020617",
+            borderColor: "#7c3aed",
+            borderRadius: 16,
+          }}
+          dropDownContainerStyle={{
+            backgroundColor: "#020617",
+            borderColor: "#7c3aed",
+          }}
+          textStyle={{ color: "white", fontSize: 16 }}
+          placeholderStyle={{ color: "#787878" }}
+          zIndex={5000}
+        />
+
+        {/* Image */}
+        <Text className="text-gray-300 mt-5 mb-2 ml-1">Upload Photo</Text>
+        <TouchableOpacity
+          onPress={pickImage}
+          className="bg-slate-800 border border-purple-700 py-4 rounded-2xl mb-4"
+        >
+          <Text className="text-white text-center text-lg">Choose Image</Text>
+        </TouchableOpacity>
+
+        {image && (
+          <Image
+            source={{ uri: image }}
+            className="w-full h-56 rounded-2xl mb-4"
+          />
+        )}
+
+        {/* 🔐 Logged in QR */}
+        {loginId && (
+          <View className="bg-slate-800 border border-purple-700 p-3 rounded-xl mb-4">
+            <Text className="text-purple-400 text-center text-sm">
+              Logged in with QR
+            </Text>
+            <Text className="text-white text-center text-lg font-bold">
+              {loginId}
+            </Text>
+          </View>
+        )}
+
+        {/* Submit */}
+        <TouchableOpacity
+          onPress={handleSubmit}
+          className="bg-purple-700 py-4 rounded-2xl mt-2"
+        >
+          <Text className="text-center text-white text-xl font-bold">
+            Submit
+          </Text>
+        </TouchableOpacity>
+      </View>
+    </KeyboardAvoidingView>
   );
-};
-
-export default Create;
+}
