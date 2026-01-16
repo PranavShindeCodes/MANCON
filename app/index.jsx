@@ -5,7 +5,6 @@ import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
-  StyleSheet,
   Text,
   TouchableOpacity,
   View,
@@ -18,24 +17,22 @@ export default function QRScanner() {
   const [scanned, setScanned] = useState(false);
   const [checkingLogin, setCheckingLogin] = useState(true);
 
-  // 🔥 Auto-login if token already exists
+  // 🔥 Auto login if already scanned
   useEffect(() => {
     const checkLogin = async () => {
       const token = await AsyncStorage.getItem("loginQR");
-
       if (token) {
         router.replace("(tabs)");
       } else {
         setCheckingLogin(false);
       }
     };
-
     checkLogin();
   }, []);
 
   if (checkingLogin) {
     return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+      <View className="flex-1 items-center justify-center">
         <ActivityIndicator size="large" />
       </View>
     );
@@ -45,21 +42,24 @@ export default function QRScanner() {
 
   if (!permission.granted) {
     return (
-      <View style={styles.container}>
-        <Text style={styles.message}>
+      <View className="flex-1 items-center justify-center px-6">
+        <Text className="text-center text-lg mb-4">
           We need your permission to access the camera
         </Text>
-        <TouchableOpacity style={styles.button} onPress={requestPermission}>
-          <Text style={styles.buttonText}>Grant Permission</Text>
+
+        <TouchableOpacity
+          onPress={requestPermission}
+          className="bg-emerald-500 px-6 py-3 rounded-lg"
+        >
+          <Text className="text-white font-semibold">Grant Permission</Text>
         </TouchableOpacity>
       </View>
     );
   }
 
-  // 🔥 Scan → save token → login
+  // 🔥 Handle QR Scan
   const handleScan = async ({ data, type }) => {
     if (scanned) return;
-
     setScanned(true);
 
     try {
@@ -69,7 +69,6 @@ export default function QRScanner() {
         time: new Date().toLocaleString(),
       };
 
-      // 🔐 Always overwrite (one phone = one user)
       await AsyncStorage.setItem("loginQR", JSON.stringify(loginData));
 
       Alert.alert("Login Successful", data, [
@@ -78,9 +77,9 @@ export default function QRScanner() {
           onPress: () => router.replace("(tabs)"),
         },
       ]);
-    } catch (error) {
-      console.log(error);
-      Alert.alert("Error", "Failed to save login");
+    } catch (err) {
+      console.log(err);
+      Alert.alert("Error", "Failed to login");
       setScanned(false);
     }
   };
@@ -90,9 +89,9 @@ export default function QRScanner() {
   };
 
   return (
-    <View style={styles.container}>
+    <View className="flex-1 bg-black">
       <CameraView
-        style={styles.camera}
+        className="flex-1"
         facing={facing}
         barcodeScannerSettings={{
           barcodeTypes: [
@@ -108,66 +107,33 @@ export default function QRScanner() {
         onBarcodeScanned={handleScan}
       >
         {/* Overlay */}
-        <View style={styles.overlay}>
-          <View style={styles.scanArea} />
+        <View className="flex-1 items-center justify-center bg-black/40">
+          {/* Scan box */}
+          <View className="w-64 h-64 border-2 border-emerald-400 rounded-2xl bg-white/5" />
+
+          {/* Text */}
           {!scanned && (
-            <View style={styles.textContainer}>
-              <Text style={styles.scanText}>Scan your QR to Login</Text>
-              <ActivityIndicator color="#fff" style={{ marginTop: 10 }} />
+            <View className="absolute top-16 items-center">
+              <Text className="text-white text-lg font-semibold">
+                Scan your QR to Login
+              </Text>
+              <ActivityIndicator className="mt-3" color="white" />
             </View>
           )}
         </View>
 
-        {/* Flip Camera */}
-        <View style={styles.buttonContainer}>
+        {/* Bottom Button */}
+        <View className="absolute bottom-10 w-full items-center">
           <TouchableOpacity
-            style={styles.flipButton}
             onPress={toggleCameraFacing}
+            className="px-8 py-3 rounded-full border border-emerald-400 bg-black/70"
           >
-            <Text style={styles.buttonText}>Flip Camera</Text>
+            <Text className="text-emerald-400 text-base font-semibold">
+              Flip Camera
+            </Text>
           </TouchableOpacity>
         </View>
       </CameraView>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1 },
-  message: { textAlign: "center", marginTop: 20, fontSize: 16 },
-  camera: { flex: 1 },
-  overlay: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  scanArea: {
-    width: 250,
-    height: 250,
-    borderWidth: 2,
-    borderColor: "white",
-    borderRadius: 10,
-  },
-  textContainer: { position: "absolute", top: 50, alignItems: "center" },
-  scanText: { color: "#fff", fontSize: 18 },
-  buttonContainer: {
-    position: "absolute",
-    bottom: 30,
-    alignSelf: "center",
-  },
-  flipButton: {
-    backgroundColor: "black",
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-  },
-  buttonText: { color: "white", fontSize: 16 },
-  button: {
-    backgroundColor: "#007AFF",
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    marginTop: 20,
-    alignSelf: "center",
-  },
-});
