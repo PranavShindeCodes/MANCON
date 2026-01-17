@@ -82,13 +82,16 @@ export default function Create() {
 
     try {
       // Replace YOUR_PC_IP with your computer's IP if using real device
-      const res = await fetch("http://10.136.182.195:1000/api/user/login", {
-        method: "POST",
-        body: formData,
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
+      const res = await fetch(
+        "https://mancon-backend.onrender.com/api/user/login",
+        {
+          method: "POST",
+          body: formData,
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
 
       const data = await res.json();
       console.log("Backend response:", data);

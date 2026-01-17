@@ -26,7 +26,9 @@ const Profile = () => {
       const parsed = JSON.parse(stored);
       const userId = parsed.value; // eg: BCA0324
 
-      const res = await fetch(`http://localhost:1000/api/user/${userId}`);
+      const res = await fetch(
+        `https://mancon-backend.onrender.com/api/user/${userId}`
+      );
       const data = await res.json();
 
       if (data?.user) {
@@ -67,7 +69,7 @@ const Profile = () => {
         )}
 
         {user?.status === true && (
-          <Text className="mt-2 text-green-400 text-sm">✅ Approved</Text>
+          <Text className="mt-2 text-green-400 text-sm"> Approved</Text>
         )}
       </View>
 
@@ -85,11 +87,11 @@ const Profile = () => {
           className="py-5 px-4 border-b border-white/10"
           onPress={ticketHandler}
         >
-          <Text className="text-white text-lg">Your Tickets</Text>
+          <Text className="text-white text-lg">QR Scanner </Text>
         </TouchableOpacity>
 
         <TouchableOpacity className="py-5 px-4 border-b border-white/10">
-          <Text className="text-white text-lg">QR Scanner</Text>
+          <Text className="text-white text-lg">Your Tickets</Text>
         </TouchableOpacity>
 
         <TouchableOpacity className="py-5 px-4" onPress={logoutHandler}>
